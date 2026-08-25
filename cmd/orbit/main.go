@@ -11,6 +11,8 @@ import (
 	"github.com/kingmon6996/orbit/internal/config"
 	"github.com/kingmon6996/orbit/internal/database"
 	"github.com/kingmon6996/orbit/internal/logging"
+	"github.com/kingmon6996/orbit/internal/repository"
+	"github.com/kingmon6996/orbit/internal/routing"
 	"github.com/kingmon6996/orbit/internal/server"
 	"github.com/kingmon6996/orbit/internal/version"
 )
@@ -29,7 +31,32 @@ func main() {
 		logger.Error("failed to initialize database", "error", err)
 		return
 	}
-	httpServer := server.New(configuration, server.NewRouterWithVersion(configuration.AppName, version.Version, logger))
+	registry := routing.NewRegistry()
+	if databaseConnection != nil {
+		serviceRepository := repository.NewServiceRepository(databaseConnection.Pool())
+		routeRepository := repository.NewRouteRepository(databaseConnection.Pool())
+		services, err := serviceRepository.ListEnabled(applicationContext)
+		if err != nil {
+			logger.Error("failed to load services", "error", err)
+			databaseConnection.Close()
+			return
+		}
+		routes, err := routeRepository.ListEnabled(applicationContext)
+		if err != nil {
+			logger.Error("failed to load routes", "error", err)
+			databaseConnection.Close()
+			return
+		}
+		if err := registry.Reload(services, routes); err != nil {
+			logger.Error("failed to build routing snapshot", "error", err)
+			databaseConnection.Close()
+			return
+		}
+		logger.Info("routing snapshot loaded", "services", len(services), "routes", len(routes))
+	}
+	baseHandler := server.NewBaseRouterWithVersion(configuration.AppName, version.Version)
+	applicationHandler := server.WithMiddleware(routing.NewHandler(registry, baseHandler), logger)
+	httpServer := server.New(configuration, applicationHandler)
 	serverErrors := make(chan error, 1)
 	go func() { serverErrors <- httpServer.Start() }()
 

@@ -66,6 +66,11 @@ func NewRouter(appName string, logger *slog.Logger) http.Handler {
 
 // NewRouterWithVersion builds routes using the supplied application version.
 func NewRouterWithVersion(appName, appVersion string, logger *slog.Logger) http.Handler {
+	return WithMiddleware(NewBaseRouterWithVersion(appName, appVersion), logger)
+}
+
+// NewBaseRouterWithVersion builds the root and health endpoints without middleware.
+func NewBaseRouterWithVersion(appName, appVersion string) http.Handler {
 	mux := http.NewServeMux()
 	mux.Handle("/health", health.Handler())
 	mux.HandleFunc("/", func(response http.ResponseWriter, request *http.Request) {
@@ -77,7 +82,12 @@ func NewRouterWithVersion(appName, appVersion string, logger *slog.Logger) http.
 		response.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(response).Encode(map[string]string{"name": appName, "version": appVersion, "status": "running"})
 	})
-	return RequestIDMiddleware(RequestLoggingMiddleware(logger, RecoveryMiddleware(logger, mux)))
+	return mux
+}
+
+// WithMiddleware applies Orbit's request infrastructure to a handler.
+func WithMiddleware(handler http.Handler, logger *slog.Logger) http.Handler {
+	return RequestIDMiddleware(RequestLoggingMiddleware(logger, RecoveryMiddleware(logger, handler)))
 }
 
 // Server owns Orbit's HTTP server lifecycle.

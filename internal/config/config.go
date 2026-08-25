@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"log/slog"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -120,6 +121,12 @@ func Load() (Config, error) {
 	}
 	if config.DatabaseEnabled && config.DatabaseURL == "" {
 		return Config{}, fmt.Errorf("invalid DATABASE_URL: required when DATABASE_ENABLED=true")
+	}
+	if config.DatabaseURL != "" {
+		parsedURL, err := url.Parse(config.DatabaseURL)
+		if err != nil || (parsedURL.Scheme != "postgres" && parsedURL.Scheme != "postgresql") || parsedURL.Host == "" {
+			return Config{}, fmt.Errorf("invalid DATABASE_URL: expected a PostgreSQL connection URL")
+		}
 	}
 	return config, nil
 }

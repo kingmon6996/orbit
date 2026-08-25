@@ -20,7 +20,10 @@ type migration struct {
 	down    string
 }
 
-var migrations = []migration{{version: 1, name: "create_gateway_configs", up: "migrations/001_create_gateway_configs.up.sql", down: "migrations/001_create_gateway_configs.down.sql"}}
+var migrations = []migration{
+	{version: 1, name: "create_gateway_configs", up: "migrations/001_create_gateway_configs.up.sql", down: "migrations/001_create_gateway_configs.down.sql"},
+	{version: 2, name: "create_services_and_routes", up: "migrations/002_create_services_and_routes.up.sql", down: "migrations/002_create_services_and_routes.down.sql"},
+}
 
 // MigrateUp applies each unapplied migration in order.
 func MigrateUp(ctx context.Context, pool *pgxpool.Pool) error {

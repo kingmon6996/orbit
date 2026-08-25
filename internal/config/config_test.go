@@ -30,7 +30,7 @@ func TestLoadConfiguredValues(t *testing.T) {
 }
 
 func TestLoadRejectsInvalidValues(t *testing.T) {
-	for key, value := range map[string]string{"ORBIT_PORT": "70000", "ORBIT_READ_TIMEOUT": "-1s", "ORBIT_LOG_LEVEL": "verbose", "APP_ENV": "test"} {
+	for key, value := range map[string]string{"ORBIT_PORT": "70000", "ORBIT_READ_TIMEOUT": "-1s", "ORBIT_LOG_LEVEL": "verbose", "APP_ENV": "test", "DATABASE_URL": "not-a-url"} {
 		clearConfigEnvironment(t)
 		t.Setenv(key, value)
 		if _, err := Load(); err == nil {
@@ -41,7 +41,7 @@ func TestLoadRejectsInvalidValues(t *testing.T) {
 
 func clearConfigEnvironment(t *testing.T) {
 	t.Helper()
-	for _, key := range []string{"APP_NAME", "APP_ENV", "ORBIT_HOST", "ORBIT_PORT", "ORBIT_LOG_LEVEL", "ORBIT_READ_TIMEOUT", "ORBIT_WRITE_TIMEOUT", "ORBIT_IDLE_TIMEOUT", "ORBIT_READ_HEADER_TIMEOUT", "ORBIT_SHUTDOWN_TIMEOUT"} {
+	for _, key := range []string{"APP_NAME", "APP_ENV", "ORBIT_HOST", "ORBIT_PORT", "ORBIT_LOG_LEVEL", "ORBIT_READ_TIMEOUT", "ORBIT_WRITE_TIMEOUT", "ORBIT_IDLE_TIMEOUT", "ORBIT_READ_HEADER_TIMEOUT", "ORBIT_SHUTDOWN_TIMEOUT", "DATABASE_ENABLED", "DATABASE_URL", "DATABASE_MAX_CONNS", "DATABASE_MIN_CONNS", "DATABASE_MAX_CONN_LIFETIME", "DATABASE_MAX_CONN_IDLE_TIME", "DATABASE_HEALTH_CHECK_PERIOD"} {
 		if value, ok := os.LookupEnv(key); ok {
 			t.Setenv(key, "")
 			t.Cleanup(func() { os.Setenv(key, value) })
