@@ -1,0 +1,10 @@
+.env
+*.exe
+*.log
+bin/
+dist/
+coverage.out
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
